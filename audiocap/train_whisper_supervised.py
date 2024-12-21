@@ -24,6 +24,7 @@ app = typer.Typer(pretty_exceptions_enable=False)
 @app.command()
 def main(
     checkpoint_dir_root: pathlib.Path = typer.Option(..., dir_okay=True, file_okay=False, readable=True, help="Path to the directory where checkpoints will be saved"),
+    laion_dir: pathlib.Path = typer.Option(None, dir_okay=True, file_okay=False, readable=True, help="Path to the directory with the Laion dataset"),
     clotho_dir: pathlib.Path = typer.Option(None, dir_okay=True, file_okay=False, readable=True, help="Path to the directory with the Clotho dataset"),
     audioset_dir: pathlib.Path = typer.Option(None, dir_okay=True, file_okay=False, readable=True, help="Path to the directory with the Audioset dataset"),
     audiocaps_dir: pathlib.Path = typer.Option(None, dir_okay=True, file_okay=False, readable=True, help="Path to the directory with the Audiocaps dataset"),
@@ -114,6 +115,7 @@ def main(
     print(f"Number of trained parameters: {tuned_params}/{total_params} = {tuned_params/total_params*100:.2f}%")
 
     dataset, audiofolders, ds_val_alternatives = audiocap.data.load_dataset_mixture(
+        laion_dir,
         clotho_dir,
         audioset_dir,
         audiocaps_dir,
