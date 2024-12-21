@@ -257,7 +257,7 @@ def load_audios_for_predition(
     prefetch: int = 10,
 ) -> tuple[dp.iter.IterDataPipe, int]:
     
-    if source_ds not in ("clotho", "audioset", "audiocaps"):
+    if source_ds not in ("laion", "clotho", "audioset", "audiocaps"):
         raise ValueError(f"Unknown value for `source_ds`: {source_ds}")
     if task not in ("caption", "keywords"):
         raise ValueError(f"Unknown value for `task`: {task}")
@@ -375,6 +375,82 @@ def load_clotho(
 
     return ds
 
+
+def load_laion(
+    audiofolder_root: pathlib.Path | str,
+    tokenizer: transformers.WhisperTokenizer,
+    feature_extractor: transformers.WhisperFeatureExtractor,
+    limit_val_split: int | None,
+    augment_config: audiocap.augment.AugmentConfig,
+    train_mini_size: int,
+    val_mini_size: int,
+    seed: int,
+) -> dict[str, AudioFolder]:
+    
+    if isinstance(audiofolder_root, str):
+        audiofolder_root = pathlib.Path(audiofolder_root)
+
+    ds = {}
+
+    common_args = dict(
+        caption_columns=["caption"],
+        source_ds="laion",
+        task="caption",
+        tokenizer=tokenizer,
+        feature_extractor=feature_extractor,
+    )
+
+    ds["train"] = AudioFolder(
+        path=audiofolder_root / "development",
+        handle_multiple_captions="explode",
+        shuffle=True,
+        augment_config=augment_config,
+        **common_args,
+    )
+
+    ds["train_mini"] = AudioFolder(
+        path=audiofolder_root / "development",
+        handle_multiple_captions="keep_first",
+        shuffle=False,
+        augment_config=augment_config,
+        sample_n=train_mini_size,
+        drop_audio_array=False,
+        load_as_iterable=False,
+        seed=seed,
+        **common_args,
+    )
+
+    ds["val"] = AudioFolder(
+        path=audiofolder_root / "validation",
+        handle_multiple_captions="keep_first",
+        shuffle=False,
+        augment_config=None,
+        sample_n=limit_val_split,
+        seed=seed,
+        **common_args,
+    )
+
+    ds["val_mini"] = AudioFolder(
+        path=audiofolder_root / "validation",
+        handle_multiple_captions="keep_first",
+        shuffle=False,
+        augment_config=None,
+        sample_n=val_mini_size,
+        drop_audio_array=False,
+        load_as_iterable=False,
+        seed=seed,
+        **common_args,
+    )
+
+    ds["test"] = AudioFolder(
+        path=audiofolder_root / "evaluation",
+        handle_multiple_captions="keep_first",
+        shuffle=False,
+        augment_config=None,
+        **common_args,
+    )
+
+    return ds
 
 def load_audioset(
     audiofolder_root: pathlib.Path | str,
@@ -531,6 +607,7 @@ def load_audiocaps(
 
 
 def load_dataset_mixture(
+    laion_dir: pathlib.Path,
     clotho_dir: pathlib.Path,
     audioset_dir: pathlib.Path,
     audiocaps_dir: pathlib.Path,
@@ -543,6 +620,11 @@ def load_dataset_mixture(
     augment_config: audiocap.augment.AugmentConfig,
 ):
     audiofolders: list[dict[str, audiocap.data.AudioFolder]] = []
+
+    if laion_dir is not None and dataset_weights["laion"] > 0.000001:
+        audiofolders.append(
+            audiocap.data.load_laion(laion_dir, tokenizer, feature_extractor, datasets_val_limits["laion"], augment_config, log_preds_num_train, log_preds_num_valid, seed=0)
+        )
 
     if clotho_dir is not None and dataset_weights["clotho"] > 0.000001:
         audiofolders.append(
