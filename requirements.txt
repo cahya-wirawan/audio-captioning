@@ -15,8 +15,8 @@ notebook==6.5.3
 ipywidgets==8.0.4 
 matplotlib==3.7.1
 pytorch-lightning==1.9.4
-transformers==4.27.1 
-datasets==2.11.0 
+transformers==4.36.2
+datasets
 evaluate==0.4.0 
 sacrebleu==2.3.1 
 rouge-score==0.1.2 
