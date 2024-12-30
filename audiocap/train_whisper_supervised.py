@@ -148,7 +148,7 @@ def main(
         log_tags.append("clever_freeze")
 
     wandb.init(
-        project="audio-captioning",
+        project="audio-captioning-test",
         tags=log_tags,
         save_code=True,
         config=log_config_dict,

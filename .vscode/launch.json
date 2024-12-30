@@ -16,8 +16,8 @@
             },
             "args": [
                 "--checkpoint-dir-root", "./checkpoints", 
-                "--clotho-dir", "./data/clotho_v2.1/audiofolder",
-                "--training-config", "./configs/finetune_tiny_config.yaml", 
+                "--laion-dir", "./data/laion/audiofolder",
+                "--training-config", "./configs/finetune_tiny_config_laion.yaml", 
                 "--wandb-group", "debug-finetuning",
             ]
         },

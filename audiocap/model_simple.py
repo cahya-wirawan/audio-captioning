@@ -50,7 +50,7 @@ class ModelSimple():
         self.model.config.forced_decoder_ids = None
         self.model.config.suppress_tokens = []
         self.dataset = load_dataset("google/fleurs", "af_za")
-        self.dataset.map(self.prepare_dataset, num_proc=8)
+        self.dataset = self.dataset.map(self.prepare_dataset, num_proc=8)
         self.dataset["val"] = self.dataset["validation"]
 
         self.collator = DataCollatorSpeechSeq2SeqWithPadding(processor=self.processor)
@@ -76,7 +76,7 @@ class ModelSimple():
         audio = batch["audio"]
 
         # optional pre-processing steps
-        transcription = batch["sentence"]
+        transcription = batch["transcription"]
         # compute log-Mel input features from input audio array 
         batch["input_features"] = self.feature_extractor(audio["array"], sampling_rate=audio["sampling_rate"]).input_features[0]
         # compute input length of audio sample in seconds
