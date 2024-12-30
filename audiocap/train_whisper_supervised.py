@@ -17,6 +17,7 @@ import audiocap.data
 import audiocap.callbacks
 import audiocap.models
 import audiocap.augment
+from model_simple import ModelSimple
 
 
 app = typer.Typer(pretty_exceptions_enable=False)
@@ -204,6 +205,13 @@ def main(
         early_stopping = transformers.EarlyStoppingCallback(**early_stopping_kwargs)
         callbacks.append(early_stopping)
 
+    model_simple = ModelSimple()
+    model = model_simple.get_model()
+    tokenizer = model_simple.get_tokenizer()
+    collator = model_simple.get_collator()
+    dataset = model_simple.get_dataset()
+    compute_metrics = model_simple.get_compute_metrics()
+
     trainer = transformers.Seq2SeqTrainer(
         model=model,
         tokenizer=tokenizer,
@@ -212,7 +220,7 @@ def main(
         train_dataset=dataset["train"],
         eval_dataset=dataset["val"],
         args=training_args,
-        callbacks=callbacks,
+        # callbacks=callbacks,
     )
 
     print("TRAINING")
