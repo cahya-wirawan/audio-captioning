@@ -49,8 +49,13 @@ class ModelSimple():
 
         self.model.config.forced_decoder_ids = None
         self.model.config.suppress_tokens = []
-        self.dataset = load_dataset("google/fleurs", "af_za")
-        self.dataset = self.dataset.map(self.prepare_dataset, num_proc=8)
+        self.dataset = load_dataset("cahya/laion-audio-small")
+        self.dataset = self.dataset['train'].train_test_split(test_size=0.2, shuffle=True, seed=42)
+        ds = self.dataset['test'].train_test_split(test_size=0.5, shuffle=True, seed=42)
+        self.dataset["validation"] = ds["train"]
+        self.dataset["test"] = ds["test"]
+        for split in self.dataset:
+            self.dataset[split] = self.dataset[split].map(self.prepare_dataset, num_proc=8)
         self.dataset["val"] = self.dataset["validation"]
 
         self.collator = DataCollatorSpeechSeq2SeqWithPadding(processor=self.processor)
@@ -71,19 +76,28 @@ class ModelSimple():
     def get_compute_metrics(self):
         return self.compute_metrics
 
+    def prepare_label(self, caption: str):
+        prefix = "laion > caption: "
+        forced_ac_decoder_ids = self.tokenizer("", text_target=prefix, add_special_tokens=False).labels
+        *fluff_tokens, eos = self.tokenizer("", text_target="", add_special_tokens=True).labels
+        labels = self.tokenizer("", text_target=caption, add_special_tokens=False).labels
+        labels = fluff_tokens + forced_ac_decoder_ids + labels + [eos]
+        return labels
+    
     def prepare_dataset(self, batch):
         # load and (possibly) resample audio data to 16kHz
-        audio = batch["audio"]
+        audio = batch["audio.mp3"]
 
         # optional pre-processing steps
-        transcription = batch["transcription"]
+        caption = batch['metadata.json']['caption']
         # compute log-Mel input features from input audio array 
         batch["input_features"] = self.feature_extractor(audio["array"], sampling_rate=audio["sampling_rate"]).input_features[0]
         # compute input length of audio sample in seconds
         batch["input_length"] = len(audio["array"]) / audio["sampling_rate"]
         
         # encode target text to label ids
-        batch["labels"] = self.tokenizer(transcription).input_ids
+        # batch["labels"] = self.tokenizer(transcription).input_ids
+        batch["labels"] = self.prepare_label(caption)
         return batch
     
     def compute_metrics(self, pred):
