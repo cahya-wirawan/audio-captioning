@@ -105,7 +105,7 @@ class ModelSimple():
         label_ids = pred.label_ids
 
         # replace -100 with the pad_token_id
-        label_ids[label_ids == -100] = processor.tokenizer.pad_token_id
+        label_ids[label_ids == -100] = self.tokenizer.pad_token_id
 
         # we do not want to group tokens when computing the metrics
         pred_str = self.tokenizer.batch_decode(pred_ids, skip_special_tokens=True)
