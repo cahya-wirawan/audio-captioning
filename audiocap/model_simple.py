@@ -49,8 +49,8 @@ class ModelSimple():
 
         self.model.config.forced_decoder_ids = None
         self.model.config.suppress_tokens = []
-        self.dataset = load_dataset("cahya/laion-audio-small")
-        self.dataset = self.dataset['train'].train_test_split(test_size=0.2, shuffle=True, seed=42)
+        self.dataset = load_dataset("cahya/laion-audio-tiny")
+        self.dataset = self.dataset['train'].train_test_split(test_size=0.1, shuffle=True, seed=42)
         ds = self.dataset['test'].train_test_split(test_size=0.5, shuffle=True, seed=42)
         self.dataset["validation"] = ds["train"]
         self.dataset["test"] = ds["test"]

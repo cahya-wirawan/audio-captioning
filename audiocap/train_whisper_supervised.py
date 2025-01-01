@@ -206,12 +206,13 @@ def main(
         callbacks.append(early_stopping)
 
     if True:
+        dataset_old = dataset
         model_simple = ModelSimple()
-        model = model_simple.get_model()
+        # model = model_simple.get_model()
         tokenizer = model_simple.get_tokenizer()
         collator = model_simple.get_collator()
         dataset = model_simple.get_dataset()
-        compute_metrics = model_simple.get_compute_metrics()
+        # compute_metrics = model_simple.get_compute_metrics()
 
     trainer = transformers.Seq2SeqTrainer(
         model=model,
@@ -219,9 +220,9 @@ def main(
         data_collator=collator,
         compute_metrics=compute_metrics,
         train_dataset=dataset["train"],
-        eval_dataset=dataset["val"],
+        eval_dataset=dataset_old["val"],
         args=training_args,
-        callbacks=callbacks,
+        # callbacks=callbacks,
     )
 
     print("TRAINING")
