@@ -116,31 +116,11 @@ def main(
     total_params = sum(p.shape.numel() for p in model.parameters())
     print(f"Number of trained parameters: {tuned_params}/{total_params} = {tuned_params/total_params*100:.2f}%")
 
-    """
-    dataset, audiofolders, ds_val_alternatives = audiocap.data.load_dataset_mixture(
-        laion_dir,
-        clotho_dir,
-        audioset_dir,
-        audiocaps_dir,
-        dataset_weights,
-        datasets_val_limits,
-        log_preds_num_train,
-        log_preds_num_valid,
-        tokenizer,
-        feature_extractor,
-        augment_config,
-    )
-
-    for ds in audiofolders:
-        for split_name, split in ds.items():
-            print(f"{split.source_ds} {split_name}: {len(split)} audio-caption pairs")
-    """
     data_laion = DataLaion("cahya/laion-audio-tiny", processor)
     dataset = data_laion.get_dataset()
     ds_val_alternatives = data_laion.get_val_alternatives()
     collator = data_laion.get_collator()
     compute_metrics = audiocap.metrics.CaptioningMetrics(tokenizer, ds_val_alternatives)
-    # collator = audiocap.data.DataCollatorAudioSeq2SeqWithPadding(tokenizer, feature_extractor)
 
     log_config_dict = {key: val for key, val in training_config_dict.items() if key != "hf_training_args"}
     log_tags = ["supervised", architecture_name, f"trained_params_{tuned_params/total_params*100:.2f}%"]
