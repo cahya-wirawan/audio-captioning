@@ -17,7 +17,7 @@ import audiocap.data
 import audiocap.callbacks
 import audiocap.models
 import audiocap.augment
-from model_simple import ModelSimple
+from data_laion import DataLaion
 
 
 app = typer.Typer(pretty_exceptions_enable=False)
@@ -76,7 +76,8 @@ def main(
 
     config = transformers.WhisperConfig.from_pretrained(architecture_name)
     tokenizer = transformers.WhisperTokenizer.from_pretrained(architecture_name, language="en", task="transcribe")
-    feature_extractor = transformers.WhisperFeatureExtractor.from_pretrained(architecture_name)
+    processor = transformers.WhisperProcessor.from_pretrained(architecture_name, language="en", task="transcribe")
+    # feature_extractor = transformers.WhisperFeatureExtractor.from_pretrained(architecture_name)
     assert isinstance(config, transformers.WhisperConfig)
     model = get_whisper_model(architecture_name, config, load_checkpoint, use_pretrained_encoder, use_pretrained_decoder)
 
@@ -115,6 +116,7 @@ def main(
     total_params = sum(p.shape.numel() for p in model.parameters())
     print(f"Number of trained parameters: {tuned_params}/{total_params} = {tuned_params/total_params*100:.2f}%")
 
+    """
     dataset, audiofolders, ds_val_alternatives = audiocap.data.load_dataset_mixture(
         laion_dir,
         clotho_dir,
@@ -132,9 +134,13 @@ def main(
     for ds in audiofolders:
         for split_name, split in ds.items():
             print(f"{split.source_ds} {split_name}: {len(split)} audio-caption pairs")
-
+    """
+    data_laion = DataLaion("cahya/laion-audio-tiny", processor)
+    dataset = data_laion.get_dataset()
+    ds_val_alternatives = data_laion.get_val_alternatives()
+    collator = data_laion.get_collator()
     compute_metrics = audiocap.metrics.CaptioningMetrics(tokenizer, ds_val_alternatives)
-    collator = audiocap.data.DataCollatorAudioSeq2SeqWithPadding(tokenizer, feature_extractor)
+    # collator = audiocap.data.DataCollatorAudioSeq2SeqWithPadding(tokenizer, feature_extractor)
 
     log_config_dict = {key: val for key, val in training_config_dict.items() if key != "hf_training_args"}
     log_tags = ["supervised", architecture_name, f"trained_params_{tuned_params/total_params*100:.2f}%"]
@@ -195,7 +201,7 @@ def main(
 
     callbacks: list[transformers.TrainerCallback]
     callbacks = [callback_log_val_preds, callback_log_train_preds, callback_peft_checkpoint]
-    
+
     if should_early_stop:
         if early_stopping_patience is None:
             raise ValueError("early_stopping_patience must be specified if should_early_stop is True")
@@ -205,16 +211,6 @@ def main(
         early_stopping = transformers.EarlyStoppingCallback(**early_stopping_kwargs)
         callbacks.append(early_stopping)
 
-    if True:
-        dataset_old = dataset
-        model_simple = ModelSimple()
-        # model = model_simple.get_model()
-        tokenizer = model_simple.get_tokenizer()
-        collator = model_simple.get_collator()
-        dataset = model_simple.get_dataset()
-        ds_val_alternatives = model_simple.get_val_alternatives()
-        compute_metrics = audiocap.metrics.CaptioningMetrics(tokenizer, ds_val_alternatives)
-        # compute_metrics = model_simple.get_compute_metrics()
 
     trainer = transformers.Seq2SeqTrainer(
         model=model,
