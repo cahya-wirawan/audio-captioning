@@ -12,12 +12,13 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "env": {
-                "CUDA_VISIBLE_DEVICES": "8",
+                "CUDA_VISIBLE_DEVICES": "0",
             },
             "args": [
                 "--checkpoint-dir-root", "./checkpoints", 
                 "--laion-dir", "./data/laion/audiofolder",
-                "--training-config", "./configs/finetune_tiny_config_laion.yaml", 
+                "--training-config", "./configs/finetune_tiny_config_laion.yaml",
+                "--load-checkpoint", "/mnt/bigdata/models/whisper-tiny-audio-captioning-v1.5",
                 "--wandb-group", "debug-finetuning",
             ]
         },

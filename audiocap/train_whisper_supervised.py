@@ -212,6 +212,8 @@ def main(
         tokenizer = model_simple.get_tokenizer()
         collator = model_simple.get_collator()
         dataset = model_simple.get_dataset()
+        ds_val_alternatives = model_simple.get_val_alternatives()
+        compute_metrics = audiocap.metrics.CaptioningMetrics(tokenizer, ds_val_alternatives)
         # compute_metrics = model_simple.get_compute_metrics()
 
     trainer = transformers.Seq2SeqTrainer(
@@ -220,7 +222,7 @@ def main(
         data_collator=collator,
         compute_metrics=compute_metrics,
         train_dataset=dataset["train"],
-        eval_dataset=dataset_old["val"],
+        eval_dataset=dataset["val"],
         args=training_args,
         # callbacks=callbacks,
     )

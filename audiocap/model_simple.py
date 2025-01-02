@@ -16,7 +16,10 @@ class DataCollatorSpeechSeq2SeqWithPadding:
         # split inputs and labels since they have to be of different lengths and need different padding methods
         # first treat the audio inputs by simply returning torch tensors
         input_features = [{"input_features": feature["input_features"]} for feature in features]
+        batch_forced_ac_decoder_ids = [feature["forced_ac_decoder_ids"] for feature in features]
+
         batch = self.processor.feature_extractor.pad(input_features, return_tensors="pt")
+        batch["forced_ac_decoder_ids"] = torch.tensor(batch_forced_ac_decoder_ids)
 
         # get the tokenized label sequences
         label_features = [{"input_ids": feature["labels"]} for feature in features]
@@ -50,6 +53,7 @@ class ModelSimple():
         self.model.config.forced_decoder_ids = None
         self.model.config.suppress_tokens = []
         self.dataset = load_dataset("cahya/laion-audio-tiny")
+        # self.dataset['train'] = self.dataset['train'].select(range(100))
         self.dataset = self.dataset['train'].train_test_split(test_size=0.1, shuffle=True, seed=42)
         ds = self.dataset['test'].train_test_split(test_size=0.5, shuffle=True, seed=42)
         self.dataset["validation"] = ds["train"]
@@ -82,7 +86,7 @@ class ModelSimple():
         *fluff_tokens, eos = self.tokenizer("", text_target="", add_special_tokens=True).labels
         labels = self.tokenizer("", text_target=caption, add_special_tokens=False).labels
         labels = fluff_tokens + forced_ac_decoder_ids + labels + [eos]
-        return labels
+        return labels, forced_ac_decoder_ids
     
     def prepare_dataset(self, batch):
         # load and (possibly) resample audio data to 16kHz
@@ -97,9 +101,20 @@ class ModelSimple():
         
         # encode target text to label ids
         # batch["labels"] = self.tokenizer(transcription).input_ids
-        batch["labels"] = self.prepare_label(caption)
+        batch["labels"], batch["forced_ac_decoder_ids"] = self.prepare_label(caption)
         return batch
     
+    def get_val_alternatives(self):
+        key = ('laion', 'caption')
+        values = {}
+        for row in self.dataset["val"]:
+            cap = row["metadata.json"]["caption"]
+            values[cap] = [cap]
+        val_alternatives = {
+            key: values
+        }
+        return val_alternatives
+
     def compute_metrics(self, pred):
         pred_ids = pred.predictions
         label_ids = pred.label_ids

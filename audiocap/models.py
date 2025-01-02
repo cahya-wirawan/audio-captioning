@@ -106,7 +106,7 @@ class WhisperForAudioCaptioning(transformers.WhisperForConditionalGeneration):
             device = self.get_decoder().device
 
             if forced_ac_decoder_ids is None:
-                forced_ac_decoder_ids = torch.tensor([[]], device=device, dtype=torch.long)
+                forced_ac_decoder_ids = torch.tensor([[875, 313, 12331, 31974, 25, 220]], device=device, dtype=torch.long) # "laion > caption: "
 
             # enrich every sample's forced_ac_decoder_ids with Whisper's forced_decoder_ids
             batch_size = forced_ac_decoder_ids.shape[0]
@@ -120,7 +120,8 @@ class WhisperForAudioCaptioning(transformers.WhisperForConditionalGeneration):
             generation_config.forced_decoder_ids = None
         # but it's not needed because we force the decoder input ids directly via
         # `decoder_input_ids` parameter below
-
+        if "labels" in kwargs:
+            del kwargs["labels"]
         return transformers.WhisperPreTrainedModel.generate(
             self,
             inputs,
