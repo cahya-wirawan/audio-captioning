@@ -220,7 +220,7 @@ def main(
         train_dataset=dataset["train"],
         eval_dataset=dataset["val"],
         args=training_args,
-        # callbacks=callbacks,
+        callbacks=callbacks,
     )
 
     print("TRAINING")

@@ -91,6 +91,7 @@ class PredictionLogger(transformers.TrainerCallback):
         all_preds = []
         all_trues = []
         all_forced_ac_decoder_ids = []
+        prefix = "laion > caption: "
 
         with torch.no_grad():
             for batch in progress:
@@ -117,8 +118,8 @@ class PredictionLogger(transformers.TrainerCallback):
 
             for item, pred, label, forced_ac_decoder_ids in zip(iter(self.dataset), all_preds, all_trues, all_forced_ac_decoder_ids):
                     print(
-                        f"  FILE_NAME='{item['file_name']}'  WANDB_TABLE={self.log_prefix}  PREFIX='{item['prefix']}'"
-                        f"  CAPTION_COLNAME='{item['caption_colname']}  FORCED_AC_DECODER_IDS='{forced_ac_decoder_ids}'"
+                        f"  FILE_NAME='{item['metadata.json']['segment_filename']}'  WANDB_TABLE={self.log_prefix}  PREFIX='{prefix}'"
+                        f"  CAPTION_COLNAME='caption  FORCED_AC_DECODER_IDS='{forced_ac_decoder_ids}'"
                     )
                     print(f"  TRUES: '{label}'")
                     print(f"  PREDS: '{pred}'", flush=True)
@@ -128,11 +129,11 @@ class PredictionLogger(transformers.TrainerCallback):
         if self.log_to_file is not None:
             logged_df = pd.DataFrame({
                 "global_step": [state.global_step] * self.num_examples,
-                "file_name": [item["file_name"] for item in self.dataset],
+                "file_name": [item['metadata.json']['segment_filename'] for item in self.dataset],
                 "trues": all_trues,
                 "preds": all_preds,
-                "prefix": [item["prefix"] for item in self.dataset],
-                "caption_colname": [item["caption_colname"] for item in self.dataset],
+                "prefix": [prefix for item in self.dataset],
+                "caption_colname": ["caption" for item in self.dataset],
                 "forced_ac_decoder_ids": all_forced_ac_decoder_ids,
                 "wandb_table": [self.log_prefix] * self.num_examples,
 
@@ -142,11 +143,11 @@ class PredictionLogger(transformers.TrainerCallback):
                 f.write(lines)
 
         if self.log_to_wandb:
-            audios = [wandb.Audio(item["audio_array"], item["sampling_rate"], item["caption"]) for item in self.dataset]
+            audios = [wandb.Audio(item["audio.mp3"]["array"], item["audio.mp3"]["sampling_rate"], item['metadata.json']["caption"]) for item in self.dataset]
             table = wandb.Table(
                 columns=["audio", "truth", "preds", "file_name"],
                 data=[
-                    (audio, label, pred, item["file_name"])
+                    (audio, label, pred, item['metadata.json']['segment_filename'])
                     for audio, label, pred, item in zip(audios, all_trues, all_preds, iter(self.dataset))
                 ]
             )

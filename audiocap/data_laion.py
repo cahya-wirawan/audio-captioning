@@ -35,6 +35,8 @@ class DataCollatorSpeechSeq2SeqWithPadding:
     
 
 class DataLaion():
+    prefix = "laion > caption: "
+
     def __init__(self, dataset_name: str, processor, train_split: float = 0.9) -> None:
         self.processor = processor
         self.tokenizer = self.processor.tokenizer
@@ -50,7 +52,7 @@ class DataLaion():
         for split in self.dataset:
             self.dataset[split] = self.dataset[split].map(self.prepare_dataset, num_proc=8)
         self.dataset["val"] = self.dataset["validation"]
-        self.dataset["train_mini"] = self.dataset["train"].select(range(32))
+        self.dataset["train_mini"] = self.dataset["train"].select(range(8))
         self.dataset["val_mini"] = self.dataset["val"].select(range(32))
 
     def get_dataset(self):
@@ -60,8 +62,7 @@ class DataLaion():
         return self.collator
 
     def prepare_label(self, caption: str):
-        prefix = "laion > caption: "
-        forced_ac_decoder_ids = self.tokenizer("", text_target=prefix, add_special_tokens=False).labels
+        forced_ac_decoder_ids = self.tokenizer("", text_target=self.prefix, add_special_tokens=False).labels
         *fluff_tokens, eos = self.tokenizer("", text_target="", add_special_tokens=True).labels
         labels = self.tokenizer("", text_target=caption, add_special_tokens=False).labels
         labels = fluff_tokens + forced_ac_decoder_ids + labels + [eos]
