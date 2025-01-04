@@ -66,7 +66,7 @@ dataset_mix:
     audioset: null
     audiocaps: null
 
-dataset_type: "mitermix" # "laion" or "mitermix"
+dataset_type: "laion" # "laion" or "mitermix"
 
 dataset_columns:
   laion:
