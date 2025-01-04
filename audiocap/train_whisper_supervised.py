@@ -16,6 +16,7 @@ import audiocap.callbacks
 import audiocap.models
 import audiocap.augment
 from data_laion import DataLaion
+import os
 
 
 app = typer.Typer(pretty_exceptions_enable=False)
@@ -36,7 +37,9 @@ def main(
         training_config_dict: dict = yaml.safe_load(f)
 
     training_args_dict = training_config_dict["hf_training_args"]
-
+    num_proc = max(8, int(len(os.sched_getaffinity(0))*0.4))
+    training_args_dict["dataloader_num_workers"] = num_proc
+    
     architecture_config = training_config_dict["architecture"]
     architecture_name = architecture_config["name"]
     use_pretrained_encoder = architecture_config["use_pretrained_whisper_encoder"]

@@ -57,7 +57,7 @@ class DataLaion():
         ds = self.dataset['test'].train_test_split(test_size=0.5, shuffle=True, seed=42)
         self.dataset["validation"] = ds["train"]
         self.dataset["test"] = ds["test"]
-        num_proc = len(os.sched_getaffinity(0))
+        num_proc = max(8, int(len(os.sched_getaffinity(0))/2))
         for split in self.dataset:
             self.dataset[split] = self.dataset[split].map(self.prepare_dataset, num_proc=num_proc)
         self.dataset["val"] = self.dataset["validation"]
