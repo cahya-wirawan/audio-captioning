@@ -116,7 +116,7 @@ def main(
     total_params = sum(p.shape.numel() for p in model.parameters())
     print(f"Number of trained parameters: {tuned_params}/{total_params} = {tuned_params/total_params*100:.2f}%")
 
-    data_laion = DataLaion(dataset_name, processor,
+    data_laion = DataLaion(dataset_name, processor, train_split=0.95,
         dataset_column_audio=dataset_column_audio,
         dataset_column_metadata=dataset_column_metadata,
         dataset_column_file_name=dataset_column_file_name)
