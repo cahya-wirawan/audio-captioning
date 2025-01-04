@@ -1,4 +1,4 @@
-from . import metrics, callbacks, audioset_tools, data, models, augment
+from . import metrics, callbacks, audioset_tools, models, augment
 
 from .models import WhisperForAudioCaptioning
 

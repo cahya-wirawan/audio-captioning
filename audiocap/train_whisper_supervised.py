@@ -10,10 +10,8 @@ import torch
 import typer
 import yaml
 import peft
-import torchdata.datapipes as dp
 
 import audiocap.metrics
-import audiocap.data
 import audiocap.callbacks
 import audiocap.models
 import audiocap.augment
@@ -134,6 +132,7 @@ def main(
         log_tags.append("clever_freeze")
 
     wandb.init(
+        entity="laion-audio-captioning",
         project="audio-captioning-test",
         tags=log_tags,
         save_code=True,
