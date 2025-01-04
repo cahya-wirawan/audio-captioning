@@ -64,6 +64,11 @@ def main(
     peft_config_dict = training_config_dict.get("peft_config", {})
     clever_freeze = training_config_dict.get("clever_freeze", False)
 
+    dataset_type = training_config_dict.get("dataset_type", "laion")
+    dataset_column_audio = training_config_dict.get("dataset_columns")[dataset_type]["column_audio"]
+    dataset_column_metadata = training_config_dict.get("dataset_columns")[dataset_type]["column_metadata"]
+    dataset_column_file_name = training_config_dict.get("dataset_columns")[dataset_type]["column_file_name"]
+
     if train_fc1_only and clever_freeze:
         raise ValueError("Cannot train fc1 only and use clever freeze at the same time")
 
@@ -114,7 +119,10 @@ def main(
     total_params = sum(p.shape.numel() for p in model.parameters())
     print(f"Number of trained parameters: {tuned_params}/{total_params} = {tuned_params/total_params*100:.2f}%")
 
-    data_laion = DataLaion("cahya/laion-audio-tiny", processor)
+    data_laion = DataLaion("cahya/audiosnippets-tiny", processor,
+        dataset_column_audio=dataset_column_audio,
+        dataset_column_metadata=dataset_column_metadata,
+        dataset_column_file_name=dataset_column_file_name)
     dataset = data_laion.get_dataset()
     ds_val_alternatives = data_laion.get_val_alternatives()
     collator = data_laion.get_collator()
@@ -162,6 +170,9 @@ def main(
         log_to_stdout=True,
         log_to_file=f"logs/preds_during_training/{wandb.run.name}/predictions_val.jsonl",
         generate_kwargs={"max_length": training_args_dict["generation_max_length"]},
+        dataset_column_audio=dataset_column_audio,
+        dataset_column_metadata=dataset_column_metadata,
+        dataset_column_file_name=dataset_column_file_name,
     )
 
     callback_log_train_preds = audiocap.callbacks.PredictionLogger(
@@ -174,6 +185,9 @@ def main(
         log_to_wandb=True,
         log_to_file=f"logs/preds_during_training/{wandb.run.name}/predictions_train.jsonl",
         generate_kwargs={"max_length": training_args_dict["generation_max_length"]},
+        dataset_column_audio=dataset_column_audio,
+        dataset_column_metadata=dataset_column_metadata,
+        dataset_column_file_name=dataset_column_file_name,
     )
 
     callback_peft_checkpoint = audiocap.callbacks.SavePeftModelCallback()

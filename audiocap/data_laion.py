@@ -2,6 +2,9 @@ import torch
 from dataclasses import dataclass
 from typing import Any, Dict, List, Union
 from datasets import load_dataset
+from datasets import Audio
+import os
+
 
 @dataclass
 class DataCollatorSpeechSeq2SeqWithPadding:
@@ -37,20 +40,26 @@ class DataCollatorSpeechSeq2SeqWithPadding:
 class DataLaion():
     prefix = "laion > caption: "
 
-    def __init__(self, dataset_name: str, processor, train_split: float = 0.9) -> None:
+    def __init__(self, dataset_name: str, processor, train_split: float = 0.9, 
+                 dataset_column_audio: str = "audio.mp3", dataset_column_metadata: str = "metadata.json", dataset_column_file_name: str = "segment_filename") -> None:
         self.processor = processor
         self.tokenizer = self.processor.tokenizer
         self.feature_extractor = self.processor.feature_extractor
         self.collator = DataCollatorSpeechSeq2SeqWithPadding(processor=processor)
+        self.column_audio = dataset_column_audio
+        self.column_metadata = dataset_column_metadata
+        self.column_file_name = dataset_column_file_name
         self.dataset = load_dataset(dataset_name)
+        self.dataset = self.dataset.cast_column(dataset_column_audio, Audio(sampling_rate=16000))
         # self.dataset['train'] = self.dataset['train'].select(range(100))
         train_split = max(min(train_split, 0.99), 0.7)
         self.dataset = self.dataset['train'].train_test_split(test_size=1-train_split, shuffle=True, seed=42)
         ds = self.dataset['test'].train_test_split(test_size=0.5, shuffle=True, seed=42)
         self.dataset["validation"] = ds["train"]
         self.dataset["test"] = ds["test"]
+        num_proc = len(os.sched_getaffinity(0))
         for split in self.dataset:
-            self.dataset[split] = self.dataset[split].map(self.prepare_dataset, num_proc=8)
+            self.dataset[split] = self.dataset[split].map(self.prepare_dataset, num_proc=num_proc)
         self.dataset["val"] = self.dataset["validation"]
         self.dataset["train_mini"] = self.dataset["train"].select(range(8))
         self.dataset["val_mini"] = self.dataset["val"].select(range(32))
@@ -70,10 +79,10 @@ class DataLaion():
     
     def prepare_dataset(self, batch):
         # load and (possibly) resample audio data to 16kHz
-        audio = batch["audio.mp3"]
+        audio = batch[self.column_audio]
 
         # optional pre-processing steps
-        caption = batch['metadata.json']['caption']
+        caption = batch[self.column_metadata]['caption']
         # compute log-Mel input features from input audio array 
         batch["input_features"] = self.feature_extractor(audio["array"], sampling_rate=audio["sampling_rate"]).input_features[0]
         # compute input length of audio sample in seconds
@@ -88,7 +97,7 @@ class DataLaion():
         key = ('laion', 'caption')
         values = {}
         for row in self.dataset["val"]:
-            cap = row["metadata.json"]["caption"]
+            cap = row[self.column_metadata]["caption"]
             values[cap] = [cap]
         val_alternatives = {
             key: values

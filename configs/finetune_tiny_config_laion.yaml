@@ -2,7 +2,8 @@ hf_training_args:
   do_train: True
   do_eval: True
 
-  max_steps: 1500
+  num_train_epochs: 6
+  # max_steps: 1500
   optim: "adamw_torch"
   learning_rate: 0.00002
   warmup_steps: 100
@@ -30,10 +31,10 @@ hf_training_args:
   generation_num_beams: 1
   generation_max_length: 80
   evaluation_strategy: "steps"
-  eval_steps: 10
+  eval_steps: 100
 
   save_strategy: "steps"
-  save_steps: 10
+  save_steps: 100
   save_total_limit: 5
 
 
@@ -48,7 +49,7 @@ early_stopping:
   early_stopping_threshold: null
 
 logging:
-  log_preds_every_n_steps: 5
+  log_preds_every_n_steps: 100
   # these are per dataset
   log_preds_num_train: 8
   log_preds_num_valid: 32
@@ -64,3 +65,15 @@ dataset_mix:
     clotho: null
     audioset: null
     audiocaps: null
+
+dataset_type: "mitermix" # "laion" or "mitermix"
+
+dataset_columns:
+  laion:
+    column_audio: "audio.mp3"
+    column_metadata: "metadata.json"
+    column_file_name: "segment_filename"
+  mitermix:
+    column_audio: "mp3"
+    column_metadata: "json"
+    column_file_name: "sample_id"

@@ -13,7 +13,6 @@ import wandb
 import torch
 import torch.utils.data
 import warnings
-
 import audiocap.models
 
 
@@ -29,6 +28,9 @@ class PredictionLogger(transformers.TrainerCallback):
         log_to_stdout: bool,
         log_to_file: pathlib.Path | str | None = None,
         generate_kwargs: dict | None = None,
+        dataset_column_audio: str = "audio.mp3",
+        dataset_column_metadata: str = "metadata.json",
+        dataset_column_file_name: str = "segment_filename",
         **kwargs
     ) -> None:
         super().__init__(**kwargs)
@@ -40,6 +42,9 @@ class PredictionLogger(transformers.TrainerCallback):
         self.skip_special_tokens = skip_special_tokens
         self.log_to_stdout = log_to_stdout
         self.log_to_wandb = log_to_wandb
+        self.column_audio = dataset_column_audio
+        self.column_metadata = dataset_column_metadata
+        self.column_file_name = dataset_column_file_name
 
         if isinstance(log_to_file, str):
             log_to_file = pathlib.Path(log_to_file)
@@ -118,7 +123,7 @@ class PredictionLogger(transformers.TrainerCallback):
 
             for item, pred, label, forced_ac_decoder_ids in zip(iter(self.dataset), all_preds, all_trues, all_forced_ac_decoder_ids):
                     print(
-                        f"  FILE_NAME='{item['metadata.json']['segment_filename']}'  WANDB_TABLE={self.log_prefix}  PREFIX='{prefix}'"
+                        f"  FILE_NAME='{item[self.column_metadata][self.column_file_name]}'  WANDB_TABLE={self.log_prefix}  PREFIX='{prefix}'"
                         f"  CAPTION_COLNAME='caption  FORCED_AC_DECODER_IDS='{forced_ac_decoder_ids}'"
                     )
                     print(f"  TRUES: '{label}'")
@@ -129,7 +134,7 @@ class PredictionLogger(transformers.TrainerCallback):
         if self.log_to_file is not None:
             logged_df = pd.DataFrame({
                 "global_step": [state.global_step] * self.num_examples,
-                "file_name": [item['metadata.json']['segment_filename'] for item in self.dataset],
+                "file_name": [item[self.column_metadata][self.column_file_name] for item in self.dataset],
                 "trues": all_trues,
                 "preds": all_preds,
                 "prefix": [prefix for item in self.dataset],
@@ -143,11 +148,11 @@ class PredictionLogger(transformers.TrainerCallback):
                 f.write(lines)
 
         if self.log_to_wandb:
-            audios = [wandb.Audio(item["audio.mp3"]["array"], item["audio.mp3"]["sampling_rate"], item['metadata.json']["caption"]) for item in self.dataset]
+            audios = [wandb.Audio(item[self.column_audio]["array"], item[self.column_audio]["sampling_rate"], item[self.column_metadata]["caption"]) for item in self.dataset]
             table = wandb.Table(
                 columns=["audio", "truth", "preds", "file_name"],
                 data=[
-                    (audio, label, pred, item['metadata.json']['segment_filename'])
+                    (audio, label, pred, item[self.column_metadata][self.column_file_name])
                     for audio, label, pred, item in zip(audios, all_trues, all_preds, iter(self.dataset))
                 ]
             )
