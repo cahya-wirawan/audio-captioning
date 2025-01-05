@@ -40,7 +40,7 @@ class DataCollatorSpeechSeq2SeqWithPadding:
 class DataLaion():
     prefix = "laion > caption: "
 
-    def __init__(self, dataset_name: str, processor, train_split: float = 0.9, 
+    def __init__(self, dataset_name: str, processor, train_split: float = 0.95, max_rows: int=0,
                  dataset_column_audio: str = "audio.mp3", dataset_column_metadata: str = "metadata.json", dataset_column_file_name: str = "segment_filename") -> None:
         self.processor = processor
         self.tokenizer = self.processor.tokenizer
@@ -50,9 +50,10 @@ class DataLaion():
         self.column_metadata = dataset_column_metadata
         self.column_file_name = dataset_column_file_name
         self.dataset = load_dataset(dataset_name)
+        if max_rows > 0:
+            self.dataset['train'] = self.dataset['train'].select(range(max_rows))
         self.dataset = self.dataset.cast_column(dataset_column_audio, Audio(sampling_rate=16000))
-        # self.dataset['train'] = self.dataset['train'].select(range(100))
-        train_split = max(min(train_split, 0.99), 0.7)
+        train_split = max(min(train_split, 0.9999), 0.7)
         self.dataset = self.dataset['train'].train_test_split(test_size=1-train_split, shuffle=True, seed=42)
         ds = self.dataset['test'].train_test_split(test_size=0.5, shuffle=True, seed=42)
         self.dataset["validation"] = ds["train"]

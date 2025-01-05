@@ -25,6 +25,8 @@ app = typer.Typer(pretty_exceptions_enable=False)
 def main(
     checkpoint_dir_root: pathlib.Path = typer.Option(..., dir_okay=True, file_okay=False, readable=True, help="Path to the directory where checkpoints will be saved"),
     dataset_name: str = typer.Option("cahya/audiosnippets-tiny", help="Dataset Name"),
+    train_split: float = typer.Option(0.95,  help="Dataset train split"),
+    max_rows: int = typer.Option(0,  help="Dataset maximum train rows"),
     training_config: pathlib.Path = typer.Option(..., dir_okay=False, file_okay=True, readable=True, help="yaml file with the training config"),
     load_checkpoint: Optional[pathlib.Path] = typer.Option(None, dir_okay=True, file_okay=True, readable=True, help="Path to checkpoint to initialize the model with"),
     wandb_group: Optional[str] = typer.Option(None, help="Wandb group"),
@@ -119,7 +121,7 @@ def main(
     total_params = sum(p.shape.numel() for p in model.parameters())
     print(f"Number of trained parameters: {tuned_params}/{total_params} = {tuned_params/total_params*100:.2f}%")
 
-    data_laion = DataLaion(dataset_name, processor, train_split=0.95,
+    data_laion = DataLaion(dataset_name, processor, train_split=train_split, max_rows=max_rows,
         dataset_column_audio=dataset_column_audio,
         dataset_column_metadata=dataset_column_metadata,
         dataset_column_file_name=dataset_column_file_name)
