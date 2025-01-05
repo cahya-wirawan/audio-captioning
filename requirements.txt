@@ -16,7 +16,7 @@ matplotlib==3.7.1
 pytorch-lightning==1.9.4
 transformers==4.36.2
 datasets
-evaluate==0.34.2
+evaluate==0.4.3
 sacrebleu==2.3.1 
 rouge-score==0.1.2 
 typer==0.7.0
