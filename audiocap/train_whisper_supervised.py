@@ -25,6 +25,7 @@ app = typer.Typer(pretty_exceptions_enable=False)
 def main(
     checkpoint_dir_root: pathlib.Path = typer.Option(..., dir_okay=True, file_okay=False, readable=True, help="Path to the directory where checkpoints will be saved"),
     dataset_name: str = typer.Option("cahya/audiosnippets-tiny", help="Dataset Name"),
+    dataset_type: Optional[str] = typer.Option(None, help="Dataset type (laion|mitermix)"),
     train_split: float = typer.Option(0.95,  help="Dataset train split"),
     max_rows: int = typer.Option(0,  help="Dataset maximum train rows"),
     training_config: pathlib.Path = typer.Option(..., dir_okay=False, file_okay=True, readable=True, help="yaml file with the training config"),
@@ -66,7 +67,8 @@ def main(
     peft_config_dict = training_config_dict.get("peft_config", {})
     clever_freeze = training_config_dict.get("clever_freeze", False)
 
-    dataset_type = training_config_dict.get("dataset_type", "laion")
+    if dataset_type is None:
+        dataset_type = training_config_dict.get("dataset_type", "laion")
     dataset_column_audio = training_config_dict.get("dataset_columns")[dataset_type]["column_audio"]
     dataset_column_metadata = training_config_dict.get("dataset_columns")[dataset_type]["column_metadata"]
     dataset_column_file_name = training_config_dict.get("dataset_columns")[dataset_type]["column_file_name"]
