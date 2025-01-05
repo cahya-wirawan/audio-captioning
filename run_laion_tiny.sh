@@ -15,7 +15,7 @@ torchrun --nproc_per_node=${ngpu} \
     audiocap/train_whisper_supervised.py \
     --checkpoint-dir-root="./checkpoints" \
     --dataset-name="$dataset_name" \
-    --train-split=0.99 \
+    --train-split=0.9 \
     --max-rows=0 \
     --training-config="./configs/finetune_tiny_config_laion.yaml" \
     --load-checkpoint="../models/whisper-tiny-audio-captioning-v1.5" \
