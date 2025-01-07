@@ -69,7 +69,7 @@ class DataLaion():
         num_proc = max(8, int(len(os.sched_getaffinity(0))/2))
         for split in self.dataset:
             self.dataset[split] = self.dataset[split].filter(self.caption_length_check, num_proc=num_proc)
-            self.dataset[split] = self.dataset[split].map(self.prepare_dataset, num_proc=num_proc,
+            self.dataset[split] = self.dataset[split].map(self.prepare_dataset, num_proc=8,
                                                           remove_columns=['__key__', '__url__'])
         self.dataset["val"] = self.dataset["validation"]
         self.dataset["train_mini"] = self.dataset["train"].select(range(8))
@@ -97,9 +97,9 @@ class DataLaion():
         
         if len(caption) < CAPTION_MIN_LENGTH:
             caption = batch[self.column_metadata]['transcription']
-            caption = re.sub(r" \[\[.+", "", caption)
-        batch["caption"] = caption
-        
+            caption = re.sub(r" +\[\[.+", "", caption)
+        batch[self.column_metadata]['caption'] = caption
+
         # compute log-Mel input features from input audio array 
         batch["input_features"] = self.feature_extractor(audio["array"], sampling_rate=audio["sampling_rate"]).input_features[0]
         # compute input length of audio sample in seconds
@@ -114,8 +114,11 @@ class DataLaion():
         key = ('laion', 'caption')
         values = {}
         for row in self.dataset["val"]:
-            cap = row[self.column_metadata]["caption"]
-            values[cap] = [cap]
+            caption = row[self.column_metadata]["caption"]
+            if len(caption) < CAPTION_MIN_LENGTH:
+                caption = row[self.column_metadata]['transcription']
+                caption = re.sub(r" +\[\[.+", "", caption)
+            values[caption] = [caption]
         val_alternatives = {
             key: values
         }
