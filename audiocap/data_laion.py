@@ -4,7 +4,12 @@ from typing import Any, Dict, List, Union
 from datasets import load_dataset
 from datasets import Audio
 import os
+import re
 
+CAPTION_MIN_LENGTH = 100
+CAPTION_MAX_LENGTH = 1000
+AUDIO_MIN_DURATION = 2.0
+AUDIO_MAX_DURATION = 25.0
 
 @dataclass
 class DataCollatorSpeechSeq2SeqWithPadding:
@@ -41,7 +46,8 @@ class DataLaion():
     prefix = "laion > caption: "
 
     def __init__(self, dataset_name: str, processor, train_split: float = 0.95, max_rows: int=0,
-                 dataset_column_audio: str = "audio.mp3", dataset_column_metadata: str = "metadata.json", dataset_column_file_name: str = "segment_filename") -> None:
+                 dataset_column_audio: str = "audio.mp3", dataset_column_metadata: str = "metadata.json", dataset_column_file_name: str = "segment_filename",
+                 dataset_column_duration: str = "duration_ms", dataset_column_duration_scale: float = 1000.0, ) -> None:
         self.processor = processor
         self.tokenizer = self.processor.tokenizer
         self.feature_extractor = self.processor.feature_extractor
@@ -49,6 +55,8 @@ class DataLaion():
         self.column_audio = dataset_column_audio
         self.column_metadata = dataset_column_metadata
         self.column_file_name = dataset_column_file_name
+        self.column_duration = dataset_column_duration
+        self.column_duration_scale = dataset_column_duration_scale
         self.dataset = load_dataset(dataset_name)
         if max_rows > 0:
             self.dataset['train'] = self.dataset['train'].select(range(max_rows))
@@ -60,7 +68,9 @@ class DataLaion():
         self.dataset["test"] = ds["test"]
         num_proc = max(8, int(len(os.sched_getaffinity(0))/2))
         for split in self.dataset:
-            self.dataset[split] = self.dataset[split].map(self.prepare_dataset, num_proc=num_proc)
+            self.dataset[split] = self.dataset[split].filter(self.caption_length_check, num_proc=num_proc)
+            self.dataset[split] = self.dataset[split].map(self.prepare_dataset, num_proc=num_proc,
+                                                          remove_columns=['__key__', '__url__'])
         self.dataset["val"] = self.dataset["validation"]
         self.dataset["train_mini"] = self.dataset["train"].select(range(8))
         self.dataset["val_mini"] = self.dataset["val"].select(range(32))
@@ -84,6 +94,12 @@ class DataLaion():
 
         # optional pre-processing steps
         caption = batch[self.column_metadata]['caption']
+        
+        if len(caption) < CAPTION_MIN_LENGTH:
+            caption = batch[self.column_metadata]['transcription']
+            caption = re.sub(r" \[\[.+", "", caption)
+        batch["caption"] = caption
+        
         # compute log-Mel input features from input audio array 
         batch["input_features"] = self.feature_extractor(audio["array"], sampling_rate=audio["sampling_rate"]).input_features[0]
         # compute input length of audio sample in seconds
@@ -104,3 +120,22 @@ class DataLaion():
             key: values
         }
         return val_alternatives
+    
+    def caption_length_check(self, row):
+        if self.column_duration in row[self.column_metadata] \
+                and (row[self.column_metadata][self.column_duration] < AUDIO_MIN_DURATION*self.column_duration_scale or \
+                    row[self.column_metadata][self.column_duration] > AUDIO_MAX_DURATION*self.column_duration_scale):
+            return False
+        elif len(row[self.column_metadata]['caption']) > CAPTION_MAX_LENGTH:
+            return False
+        elif len(row[self.column_metadata]['caption']) >= CAPTION_MIN_LENGTH:
+            return True
+        elif 'transcription' in row[self.column_metadata]:
+            if row[self.column_metadata]['transcription'] is not None \
+                and len(row[self.column_metadata]['transcription']) >= CAPTION_MIN_LENGTH \
+                and len(row[self.column_metadata]['transcription']) <= CAPTION_MAX_LENGTH :
+                return True
+            else:
+                return False
+        else:
+            return False

@@ -16,9 +16,10 @@
             },
             "args": [
                 "--checkpoint-dir-root", "./checkpoints", 
-                "--dataset-name", "cahya/audiosnippets-tiny",
-                "--train-split", "0.99",
-                "--max-rows", "100",
+                "--dataset-name", "cahya/audiosnippets-tiny", 
+                "--dataset-type", "mitermix", 
+                "--train-split", "0.9",
+                "--max-rows", "1000",
                 "--training-config", "./configs/finetune_tiny_config_laion.yaml",
                 "--load-checkpoint", "../models/whisper-tiny-audio-captioning-v1.5",
                 "--wandb-group", "debug-finetuning",

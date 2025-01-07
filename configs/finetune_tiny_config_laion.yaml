@@ -71,9 +71,13 @@ dataset_type: "mitermix" # "laion" or "mitermix"
 dataset_columns:
   laion:
     column_audio: "audio.mp3"
+    column_duration: "duration_ms"
+    column_duration_scale: 1000.0
     column_metadata: "metadata.json"
     column_file_name: "segment_filename"
   mitermix:
     column_audio: "mp3"
+    column_duration: "duration"
+    column_duration_scale: 1.0
     column_metadata: "json"
     column_file_name: "sample_id"

@@ -72,6 +72,8 @@ def main(
     dataset_column_audio = training_config_dict.get("dataset_columns")[dataset_type]["column_audio"]
     dataset_column_metadata = training_config_dict.get("dataset_columns")[dataset_type]["column_metadata"]
     dataset_column_file_name = training_config_dict.get("dataset_columns")[dataset_type]["column_file_name"]
+    dataset_column_duration = training_config_dict.get("dataset_columns")[dataset_type]["column_duration"]
+    dataset_column_duration_scale = training_config_dict.get("dataset_columns")[dataset_type]["column_duration_scale"]
 
     if train_fc1_only and clever_freeze:
         raise ValueError("Cannot train fc1 only and use clever freeze at the same time")
@@ -126,7 +128,9 @@ def main(
     data_laion = DataLaion(dataset_name, processor, train_split=train_split, max_rows=max_rows,
         dataset_column_audio=dataset_column_audio,
         dataset_column_metadata=dataset_column_metadata,
-        dataset_column_file_name=dataset_column_file_name)
+        dataset_column_file_name=dataset_column_file_name,
+        dataset_column_duration=dataset_column_duration,
+        dataset_column_duration_scale=dataset_column_duration_scale)
     dataset = data_laion.get_dataset()
     ds_val_alternatives = data_laion.get_val_alternatives()
     collator = data_laion.get_collator()
