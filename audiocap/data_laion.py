@@ -98,7 +98,7 @@ class DataLaion():
         if len(caption) < CAPTION_MIN_LENGTH:
             caption = batch[self.column_metadata]['transcription']
             caption = re.sub(r" +\[\[.+", "", caption)
-        batch[self.column_metadata]['caption'] = caption
+            batch[self.column_metadata]['caption'] = caption
 
         # compute log-Mel input features from input audio array 
         batch["input_features"] = self.feature_extractor(audio["array"], sampling_rate=audio["sampling_rate"]).input_features[0]
