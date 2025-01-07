@@ -9,7 +9,7 @@ import re
 CAPTION_MIN_LENGTH = 100
 CAPTION_MAX_LENGTH = 1000
 AUDIO_MIN_DURATION = 2.0
-AUDIO_MAX_DURATION = 25.0
+AUDIO_MAX_DURATION = 28.0
 
 @dataclass
 class DataCollatorSpeechSeq2SeqWithPadding:
