@@ -2,7 +2,7 @@ import torch
 from dataclasses import dataclass
 from typing import Any, Dict, List, Union
 from datasets import load_dataset
-from datasets import Audio
+from datasets import Audio, DatasetDict, Dataset, concatenate_datasets
 import os
 import re
 
@@ -10,6 +10,8 @@ CAPTION_MIN_LENGTH = 100
 CAPTION_MAX_LENGTH = 1000
 AUDIO_MIN_DURATION = 2.0
 AUDIO_MAX_DURATION = 28.0
+LABEL_MAX_LENGTH = 448
+
 
 @dataclass
 class DataCollatorSpeechSeq2SeqWithPadding:
@@ -57,23 +59,42 @@ class DataLaion():
         self.column_file_name = dataset_column_file_name
         self.column_duration = dataset_column_duration
         self.column_duration_scale = dataset_column_duration_scale
-        self.dataset = load_dataset(dataset_name)
-        if max_rows > 0:
-            self.dataset['train'] = self.dataset['train'].select(range(max_rows))
-        self.dataset = self.dataset.cast_column(dataset_column_audio, Audio(sampling_rate=16000))
-        train_split = max(min(train_split, 0.9999), 0.7)
-        self.dataset = self.dataset['train'].train_test_split(test_size=1-train_split, shuffle=True, seed=42)
-        ds = self.dataset['test'].train_test_split(test_size=0.5, shuffle=True, seed=42)
-        self.dataset["validation"] = ds["train"]
-        self.dataset["test"] = ds["test"]
-        num_proc = max(8, int(len(os.sched_getaffinity(0))/2))
-        for split in self.dataset:
-            self.dataset[split] = self.dataset[split].filter(self.caption_length_check, num_proc=num_proc)
-            self.dataset[split] = self.dataset[split].map(self.prepare_dataset, num_proc=8,
-                                                          remove_columns=['__key__', '__url__'])
+        
+        if False:
+            self.dataset = load_dataset(dataset_name)
+            if max_rows > 0:
+                self.dataset['train'] = self.dataset['train'].select(range(max_rows))
+            self.dataset = self.dataset.cast_column(dataset_column_audio, Audio(sampling_rate=16000))
+            train_split = max(min(train_split, 0.9999), 0.7)
+            self.dataset = self.dataset['train'].train_test_split(test_size=1-train_split, shuffle=True, seed=42)
+            ds = self.dataset['test'].train_test_split(test_size=0.5, shuffle=True, seed=42)
+            self.dataset["validation"] = ds["train"]
+            self.dataset["test"] = ds["test"]
+            num_proc = max(8, int(len(os.sched_getaffinity(0))/2))
+            for split in self.dataset:
+                self.dataset[split] = self.dataset[split].filter(self.caption_length_check, num_proc=num_proc)
+                self.dataset[split] = self.dataset[split].map(self.prepare_dataset, num_proc=4,
+                                                              remove_columns=['__key__', '__url__'])
+        else:
+            cache_dir = "/media/downloads/.cache/huggingface/datasets/mitermix___audiosnippets_small_with_detailed_annotation2/default/0.0.0/8206ef7c20fed6ae1b126340fb6a623e598b7f35"
+            cache_files = {
+                "train": "cache-b13e46f8923e5830_0000{}_of_00004.arrow",
+                "validation": "cache-b38ed611274fefec_0000{}_of_00004.arrow",
+                "test": "cache-7668cfbdae38e70d_0000{}_of_00004.arrow"
+            }
+            self.dataset = DatasetDict()
+            for split in cache_files:
+                ds = []
+                for i in range(4):
+                    ds.append(Dataset.from_file(cache_dir+"/"+cache_files[split].format(i)).select(range(200)))
+                self.dataset[split] = concatenate_datasets(ds)
+            for split in self.dataset:
+                self.dataset[split] = self.dataset[split].filter(self.label_length_check, num_proc=10)
+
         self.dataset["val"] = self.dataset["validation"]
         self.dataset["train_mini"] = self.dataset["train"].select(range(8))
         self.dataset["val_mini"] = self.dataset["val"].select(range(32))
+        # print(self.dataset)
 
     def get_dataset(self):
         return self.dataset
@@ -140,5 +161,12 @@ class DataLaion():
                 return True
             else:
                 return False
+        else:
+            return False
+    
+
+    def label_length_check(self, row):
+        if len(row['labels']) < LABEL_MAX_LENGTH:
+            return True
         else:
             return False

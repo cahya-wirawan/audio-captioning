@@ -81,7 +81,8 @@ class PredictionLogger(transformers.TrainerCallback):
             return
         
         model: audiocap.models.WhisperForAudioCaptioning = kwargs["model"]
-        tokenizer: transformers.WhisperTokenizer = kwargs["tokenizer"]
+        #tokenizer: transformers.WhisperTokenizer = kwargs["tokenizer"]
+        tokenizer = transformers.WhisperTokenizer.from_pretrained("openai/whisper-base", language="en", task="transcribe")
         
         dataloader = torch.utils.data.DataLoader(
             self.dataset,

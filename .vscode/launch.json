@@ -28,6 +28,29 @@
             ]
         },
         {
+            "name": "Run finetuning emo",
+            "type": "python",
+            "request": "launch",
+            "program": "audiocap/train_whisper_supervised.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0",
+                "NCCL_P2P_DISABLE": "0",
+                "NCCL_IB_DISABLE": "0",
+            },
+            "args": [
+                "--checkpoint-dir-root", "./checkpoints", 
+                "--dataset-name", "cahya/audiosnippets-tiny", 
+                "--dataset-type", "mitermix", 
+                "--train-split", "0.9",
+                "--max-rows", "1000",
+                "--training-config", "./configs/finetune_base_config_laion_emo.yaml",
+                "--load-checkpoint", "../models/whisper-base",
+                "--wandb-group", "debug-finetuning",
+            ]
+        },
+        {
             "name": "Run mix-all",
             "type": "python",
             "request": "launch",
@@ -62,6 +85,24 @@
                 "--training-config", "./configs/pretrain_3on1_small_config.yaml",
                 "--wandb-group", "debug-pretraining",
             ]
-        }
+        },
+        {
+            "name": "Run emo script",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/emo_convert.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0",
+                "NCCL_P2P_DISABLE": "0",
+                "NCCL_IB_DISABLE": "0",
+            },
+            "args": [
+                "--dataset-name", "mitermix/audiosnippets_small_with_detailed_annotation2", 
+                "--target-dir", "/home/evobits/storageserver_mountpoint/caption/audiosnippets_small",
+                "--train-split", "0.995"
+            ]
+        },
     ]
 }
