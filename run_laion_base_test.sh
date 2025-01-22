@@ -3,16 +3,13 @@
 ngpu=$(nvidia-smi --query-gpu=name --format=csv,noheader|wc -l)
 ngpu=2
 #dataset_name="cahya/laion-audio-tiny"
-#dataset_name="cahya/audiosnippets-tiny"
+dataset_name="cahya/audiosnippets-tiny"
 #dataset_name="mitermix/audiosnippets"
-dataset_name="mitermix/audiosnippets_long_50k"
-# dataset_name="cahya/emo-small"
 
 #dataset_type="laion"
 dataset_type="mitermix"
 
-# model_checkpoint="../models/whisper-base"
-model_checkpoint="../models/whisper-base-audio-captioning-v1.0"
+model_checkpoint="../models/whisper-base"
 # model_checkpoint="/media/downloads/caption/audio-captioning/checkpoints/noble-salad-76/final"
 
 # NVidia 4090: disable NCCL_P2P and NCCL_IB
@@ -27,8 +24,8 @@ torchrun --nproc_per_node=${ngpu} \
     --checkpoint-dir-root="./checkpoints" \
     --dataset-name="$dataset_name" \
     --dataset-type="$dataset_type" \
-    --train-split=0.98 \
-    --max-rows=0 \
-    --training-config="./configs/finetune_base_config_laion_emo.yaml" \
+    --train-split=0.9 \
+    --max-rows=1000 \
+    --training-config="./configs/finetune_base_config_laion_test.yaml" \
     --load-checkpoint="$model_checkpoint" \
     --wandb-group="finetuning"

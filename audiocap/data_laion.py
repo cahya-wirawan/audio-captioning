@@ -3,14 +3,15 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Union
 from datasets import load_dataset
 from datasets import Audio, DatasetDict, Dataset, concatenate_datasets
+from label_maker import LabelMaker
 import os
 import re
 
 CAPTION_MIN_LENGTH = 100
-CAPTION_MAX_LENGTH = 1000
+CAPTION_MAX_LENGTH = 900
 AUDIO_MIN_DURATION = 2.0
 AUDIO_MAX_DURATION = 28.0
-LABEL_MAX_LENGTH = 448
+LABEL_MAX_LENGTH = 440
 
 
 @dataclass
@@ -59,8 +60,9 @@ class DataLaion():
         self.column_file_name = dataset_column_file_name
         self.column_duration = dataset_column_duration
         self.column_duration_scale = dataset_column_duration_scale
+        self.label_maker = LabelMaker()
         
-        if False:
+        if True:
             self.dataset = load_dataset(dataset_name)
             if max_rows > 0:
                 self.dataset['train'] = self.dataset['train'].select(range(max_rows))
@@ -72,9 +74,10 @@ class DataLaion():
             self.dataset["test"] = ds["test"]
             num_proc = max(8, int(len(os.sched_getaffinity(0))/2))
             for split in self.dataset:
-                self.dataset[split] = self.dataset[split].filter(self.caption_length_check, num_proc=num_proc)
-                self.dataset[split] = self.dataset[split].map(self.prepare_dataset, num_proc=4,
+                # self.dataset[split] = self.dataset[split].filter(self.caption_length_check, num_proc=num_proc)
+                self.dataset[split] = self.dataset[split].map(self.prepare_dataset, num_proc=8,
                                                               remove_columns=['__key__', '__url__'])
+                self.dataset[split] = self.dataset[split].filter(self.row_check, num_proc=8)
         else:
             cache_dir = "/media/downloads/.cache/huggingface/datasets/mitermix___audiosnippets_small_with_detailed_annotation2/default/0.0.0/8206ef7c20fed6ae1b126340fb6a623e598b7f35"
             cache_files = {
@@ -86,7 +89,7 @@ class DataLaion():
             for split in cache_files:
                 ds = []
                 for i in range(4):
-                    ds.append(Dataset.from_file(cache_dir+"/"+cache_files[split].format(i)).select(range(200)))
+                    ds.append(Dataset.from_file(cache_dir+"/"+cache_files[split].format(i)))
                 self.dataset[split] = concatenate_datasets(ds)
             for split in self.dataset:
                 self.dataset[split] = self.dataset[split].filter(self.label_length_check, num_proc=10)
@@ -106,20 +109,15 @@ class DataLaion():
         forced_ac_decoder_ids = self.tokenizer("", text_target=self.prefix, add_special_tokens=False).labels
         *fluff_tokens, eos = self.tokenizer("", text_target="", add_special_tokens=True).labels
         labels = self.tokenizer("", text_target=caption, add_special_tokens=False).labels
-        labels = fluff_tokens + forced_ac_decoder_ids + labels + [eos]
+        labels = fluff_tokens + forced_ac_decoder_ids + labels+ [eos]
         return labels, forced_ac_decoder_ids
     
     def prepare_dataset(self, batch):
         # load and (possibly) resample audio data to 16kHz
         audio = batch[self.column_audio]
 
-        # optional pre-processing steps
-        caption = batch[self.column_metadata]['caption']
-        
-        if len(caption) < CAPTION_MIN_LENGTH:
-            caption = batch[self.column_metadata]['transcription']
-            caption = re.sub(r" +\[\[.+", "", caption)
-            batch[self.column_metadata]['caption'] = caption
+        # create label from metadata
+        label = self.label_maker.create_label(batch[self.column_metadata])
 
         # compute log-Mel input features from input audio array 
         batch["input_features"] = self.feature_extractor(audio["array"], sampling_rate=audio["sampling_rate"]).input_features[0]
@@ -128,18 +126,15 @@ class DataLaion():
         
         # encode target text to label ids
         # batch["labels"] = self.tokenizer(transcription).input_ids
-        batch["labels"], batch["forced_ac_decoder_ids"] = self.prepare_label(caption)
+        batch["labels"], batch["forced_ac_decoder_ids"] = self.prepare_label(label)
         return batch
     
     def get_val_alternatives(self):
         key = ('laion', 'caption')
         values = {}
         for row in self.dataset["val"]:
-            caption = row[self.column_metadata]["caption"]
-            if len(caption) < CAPTION_MIN_LENGTH:
-                caption = row[self.column_metadata]['transcription']
-                caption = re.sub(r" +\[\[.+", "", caption)
-            values[caption] = [caption]
+            label = self.label_maker.create_label(row[self.column_metadata])
+            values[label] = [label]
         val_alternatives = {
             key: values
         }
@@ -167,6 +162,17 @@ class DataLaion():
 
     def label_length_check(self, row):
         if len(row['labels']) < LABEL_MAX_LENGTH:
+            return True
+        else:
+            return False
+
+
+    def row_check(self, row):
+        if self.column_duration in row[self.column_metadata] \
+                and (row[self.column_metadata][self.column_duration] < AUDIO_MIN_DURATION*self.column_duration_scale or \
+                    row[self.column_metadata][self.column_duration] > AUDIO_MAX_DURATION*self.column_duration_scale):
+            return False
+        if 20 < len(row['labels']) < LABEL_MAX_LENGTH:
             return True
         else:
             return False

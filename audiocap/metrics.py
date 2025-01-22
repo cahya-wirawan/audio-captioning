@@ -341,16 +341,16 @@ class CaptioningMetrics:
             # coco metrics
             tokenizer = CocoTokenizer(preds_str, references)
             tokens = tokenizer.tokenize()
-            spice_score = self.spice.compute(predictions=preds_str, references=references, tokens=tokens)
+            # spice_score = self.spice.compute(predictions=preds_str, references=references, tokens=tokens)
             cider_score = self.cider.compute(predictions=preds_str, references=references, tokens=tokens)
         
             # make mypy shut up
-            assert spice_score is not None
+            # assert spice_score is not None
             assert cider_score is not None
             assert sacrebleu_score is not None
             assert meteor_score is not None
 
-            spider_score = 0.5 * (spice_score['average_score'] + cider_score['score'])
+            # spider_score = 0.5 * (spice_score['average_score'] + cider_score['score'])
 
             pred_num_words = np.mean([len(pred.split()) for pred in preds_str])
             true_num_words = np.mean([len(true.split()) for true in trues_str])
@@ -359,9 +359,9 @@ class CaptioningMetrics:
             metrics_all.update({
                 f"{ds_name}/{task_prefix}sacrebleu": sacrebleu_score['score'],
                 f"{ds_name}/{task_prefix}meteor": meteor_score['meteor'],
-                f"{ds_name}/{task_prefix}spice": spice_score['average_score'],
+                # f"{ds_name}/{task_prefix}spice": spice_score['average_score'],
                 f"{ds_name}/{task_prefix}cider": cider_score['score'],
-                f"{ds_name}/{task_prefix}spider": spider_score,
+                # f"{ds_name}/{task_prefix}spider": spider_score,
                 f"{ds_name}/{task_prefix}pred_num_words": float(pred_num_words),
                 f"{ds_name}/{task_prefix}true_num_words": float(true_num_words),
             })

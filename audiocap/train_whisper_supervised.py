@@ -132,6 +132,7 @@ def main(
         dataset_column_duration=dataset_column_duration,
         dataset_column_duration_scale=dataset_column_duration_scale)
     dataset = data_laion.get_dataset()
+    print("Dataset", dataset)
     ds_val_alternatives = data_laion.get_val_alternatives()
     collator = data_laion.get_collator()
     compute_metrics = audiocap.metrics.CaptioningMetrics(tokenizer, ds_val_alternatives)

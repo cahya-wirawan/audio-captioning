@@ -28,6 +28,29 @@
             ]
         },
         {
+            "name": "Run finetuning small",
+            "type": "python",
+            "request": "launch",
+            "program": "audiocap/train_whisper_supervised.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0,1",
+                "NCCL_P2P_DISABLE": "0",
+                "NCCL_IB_DISABLE": "0",
+            },
+            "args": [
+                "--checkpoint-dir-root", "./checkpoints", 
+                "--dataset-name", "cahya/audiosnippets-tiny", 
+                "--dataset-type", "mitermix", 
+                "--train-split", "0.9",
+                "--max-rows", "1000",
+                "--training-config", "./configs/finetune_small_config_laion.yaml",
+                "--load-checkpoint", "../models/whisper-small",
+                "--wandb-group", "debug-finetuning",
+            ]
+        },
+        {
             "name": "Run finetuning emo",
             "type": "python",
             "request": "launch",
@@ -41,12 +64,12 @@
             },
             "args": [
                 "--checkpoint-dir-root", "./checkpoints", 
-                "--dataset-name", "cahya/audiosnippets-tiny", 
+                "--dataset-name", "mitermix/audiosnippets_long_50k", 
                 "--dataset-type", "mitermix", 
-                "--train-split", "0.9",
-                "--max-rows", "1000",
+                "--train-split", "0.99",
+                "--max-rows", "0",
                 "--training-config", "./configs/finetune_base_config_laion_emo.yaml",
-                "--load-checkpoint", "../models/whisper-base",
+                "--load-checkpoint", "../models/whisper-base-audio-captioning-v1.0",
                 "--wandb-group", "debug-finetuning",
             ]
         },
