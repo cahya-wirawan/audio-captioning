@@ -50,7 +50,8 @@ class DataLaion():
 
     def __init__(self, dataset_name: str, processor, train_split: float = 0.95, max_rows: int=0,
                  dataset_column_audio: str = "audio.mp3", dataset_column_metadata: str = "metadata.json", dataset_column_file_name: str = "segment_filename",
-                 dataset_column_duration: str = "duration_ms", dataset_column_duration_scale: float = 1000.0, ) -> None:
+                 dataset_column_duration: str = "duration_ms", dataset_column_duration_scale: float = 1000.0,
+                 with_emotion=False, with_caption=True, with_detailed_caption=False, with_transcription=False) -> None:
         self.processor = processor
         self.tokenizer = self.processor.tokenizer
         self.feature_extractor = self.processor.feature_extractor
@@ -60,6 +61,10 @@ class DataLaion():
         self.column_file_name = dataset_column_file_name
         self.column_duration = dataset_column_duration
         self.column_duration_scale = dataset_column_duration_scale
+        self.with_emotion = with_emotion
+        self.with_caption = with_caption
+        self.with_detailed_caption = with_detailed_caption
+        self.with_transcription = with_transcription
         self.label_maker = LabelMaker()
         
         if True:
@@ -72,7 +77,7 @@ class DataLaion():
             ds = self.dataset['test'].train_test_split(test_size=0.5, shuffle=True, seed=42)
             self.dataset["validation"] = ds["train"]
             self.dataset["test"] = ds["test"]
-            num_proc = max(8, int(len(os.sched_getaffinity(0))/2))
+            # num_proc = max(8, int(len(os.sched_getaffinity(0))/2))
             for split in self.dataset:
                 # self.dataset[split] = self.dataset[split].filter(self.caption_length_check, num_proc=num_proc)
                 self.dataset[split] = self.dataset[split].map(self.prepare_dataset, num_proc=8,
@@ -117,7 +122,9 @@ class DataLaion():
         audio = batch[self.column_audio]
 
         # create label from metadata
-        label = self.label_maker.create_label(batch[self.column_metadata])
+        label = self.label_maker.create_label(batch[self.column_metadata],
+                                              with_emotion=self.with_emotion, with_caption=self.with_caption,
+                                              with_detailed_caption=self.with_detailed_caption, with_transcription=self.with_transcription)
 
         # compute log-Mel input features from input audio array 
         batch["input_features"] = self.feature_extractor(audio["array"], sampling_rate=audio["sampling_rate"]).input_features[0]
@@ -133,7 +140,9 @@ class DataLaion():
         key = ('laion', 'caption')
         values = {}
         for row in self.dataset["val"]:
-            label = self.label_maker.create_label(row[self.column_metadata])
+            label = self.label_maker.create_label(row[self.column_metadata],
+                                                  with_emotion=self.with_emotion, with_caption=self.with_caption,
+                                                  with_detailed_caption=self.with_detailed_caption, with_transcription=self.with_transcription)
             values[label] = [label]
         val_alternatives = {
             key: values

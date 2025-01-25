@@ -81,3 +81,9 @@ dataset_columns:
     column_duration_scale: 1.0
     column_metadata: "json"
     column_file_name: "sample_id"
+
+dataset_labels:
+  with_emotion: False
+  with_caption: False
+  with_detailed_caption: True
+  with_transcription: False

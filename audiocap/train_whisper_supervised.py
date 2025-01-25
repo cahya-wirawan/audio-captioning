@@ -75,6 +75,11 @@ def main(
     dataset_column_duration = training_config_dict.get("dataset_columns")[dataset_type]["column_duration"]
     dataset_column_duration_scale = training_config_dict.get("dataset_columns")[dataset_type]["column_duration_scale"]
 
+    dataset_with_emotion = training_config_dict.get("dataset_labels", False)["with_emotion"]
+    dataset_with_caption = training_config_dict.get("dataset_labels", False)["with_caption"]
+    dataset_with_detailed_caption = training_config_dict.get("dataset_labels", False)["with_detailed_caption"]
+    dataset_with_transcription = training_config_dict.get("dataset_labels", False)["with_transcription"]
+
     if train_fc1_only and clever_freeze:
         raise ValueError("Cannot train fc1 only and use clever freeze at the same time")
 
@@ -130,7 +135,11 @@ def main(
         dataset_column_metadata=dataset_column_metadata,
         dataset_column_file_name=dataset_column_file_name,
         dataset_column_duration=dataset_column_duration,
-        dataset_column_duration_scale=dataset_column_duration_scale)
+        dataset_column_duration_scale=dataset_column_duration_scale,
+        with_emotion=dataset_with_emotion,
+        with_caption=dataset_with_caption,
+        with_detailed_caption=dataset_with_detailed_caption,
+        with_transcription=dataset_with_transcription)
     dataset = data_laion.get_dataset()
     print("Dataset", dataset)
     ds_val_alternatives = data_laion.get_val_alternatives()
