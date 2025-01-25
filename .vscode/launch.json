@@ -88,7 +88,11 @@
                 "--dataset-column-metadata", "json",
                 "--dataset-column-file-name", "sample_id",
                 "--dataset-column-duration", "duration",
-                "--dataset-column-duration-scale", "1.0"
+                "--dataset-column-duration-scale", "1.0",
+                // "--dataset-with-emotion",
+                "--dataset-with-caption",
+                // "--dataset-with-detailed-caption", "false",
+                // "--dataset-with-transcription", "false",
             ]
         },
         {

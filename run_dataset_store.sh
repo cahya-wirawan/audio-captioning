@@ -1,5 +1,12 @@
 #!/bin/sh
 
+### labels usage:
+# --dataset-with-emotion \
+# --dataset-with-caption \
+# --dataset-with-detailed-caption \
+# --dataset-with-transcription
+###
+
 python audiocap/dataset_store.py \
     --dataset-name cahya/audiosnippets-tiny \
     --train-split 0.5 \
@@ -8,4 +15,5 @@ python audiocap/dataset_store.py \
     --dataset-column-metadata json \
     --dataset-column-file-name sample_id \
     --dataset-column-duration duration \
-    --dataset-column-duration-scale 1.0
+    --dataset-column-duration-scale 1.0 \
+    --dataset-with-caption
