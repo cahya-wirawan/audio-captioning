@@ -16,7 +16,7 @@ def main(dataset_name: str = typer.Option("cahya/audiosnippets-tiny", help="Data
          dataset_column_duration_scale: float = typer.Option(1.0,  help="Dataset Column Duration Scale"),
          dataset_local_dir: str = typer.Option(None, help="Dataset local directory"),
          dataset_with_emotion: bool = typer.Option(False, help="Dataset with_emotion"),
-         dataset_with_caption: bool = typer.Option(True, help="Dataset with_caption"),
+         dataset_with_caption: bool = typer.Option(False, help="Dataset with_caption"),
          dataset_with_detailed_caption: bool = typer.Option(False, help="Dataset with_detailed_caption"),
          dataset_with_transcription: bool = typer.Option(False, help="Dataset with_transcription")) -> None:
     

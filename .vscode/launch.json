@@ -91,8 +91,8 @@
                 "--dataset-column-duration-scale", "1.0",
                 // "--dataset-with-emotion",
                 "--dataset-with-caption",
-                // "--dataset-with-detailed-caption", "false",
-                // "--dataset-with-transcription", "false",
+                // "--dataset-with-detailed-caption",
+                // "--dataset-with-transcription",
             ]
         },
         {
