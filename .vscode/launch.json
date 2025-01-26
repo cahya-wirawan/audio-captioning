@@ -81,7 +81,6 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [
-                "--dataset-name", "cahya/audiosnippets-tiny", 
                 "--train-split", "0.5",
                 "--max-rows", "250",
                 "--dataset-column-audio", "mp3",
@@ -93,6 +92,7 @@
                 "--dataset-with-caption",
                 // "--dataset-with-detailed-caption",
                 // "--dataset-with-transcription",
+                "cahya/audiosnippets-tiny",
             ]
         },
         {

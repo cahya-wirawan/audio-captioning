@@ -7,7 +7,7 @@
 # --dataset-with-transcription
 ###
 
-python audiocap/dataset_store.py "cahya/audiosnippets-tiny" \
+python audiocap/dataset_store.py \
     --train-split 0.5 \
     --max-rows 250 \
     --dataset-column-audio mp3 \
@@ -15,4 +15,5 @@ python audiocap/dataset_store.py "cahya/audiosnippets-tiny" \
     --dataset-column-file-name sample_id \
     --dataset-column-duration duration \
     --dataset-column-duration-scale 1.0 \
-    --dataset-with-caption
+    --dataset-with-caption \
+    "cahya/audiosnippets-tiny" 
