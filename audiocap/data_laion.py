@@ -1,11 +1,12 @@
 import torch
 from dataclasses import dataclass
 from typing import Any, Dict, List, Union
-from datasets import load_dataset
+from datasets import load_dataset, load_from_disk
 from datasets import Audio, DatasetDict, Dataset, concatenate_datasets
 from label_maker import LabelMaker
 import os
 import re
+from pathlib import Path
 
 CAPTION_MIN_LENGTH = 100
 CAPTION_MAX_LENGTH = 900
@@ -67,7 +68,10 @@ class DataLaion():
         self.with_transcription = with_transcription
         self.label_maker = LabelMaker()
         
-        if True:
+        if Path(dataset_name).exists():
+            self.dataset = load_from_disk(dataset_name)
+            self.dataset["val"] = self.dataset["validation"]
+        else:
             self.dataset = load_dataset(dataset_name)
             if max_rows > 0:
                 self.dataset['train'] = self.dataset['train'].select(range(max_rows))
@@ -81,27 +85,12 @@ class DataLaion():
             for split in self.dataset:
                 # self.dataset[split] = self.dataset[split].filter(self.caption_length_check, num_proc=num_proc)
                 self.dataset[split] = self.dataset[split].map(self.prepare_dataset, num_proc=8,
-                                                              remove_columns=['__key__', '__url__'])
+                                                            remove_columns=['__key__', '__url__'])
                 self.dataset[split] = self.dataset[split].filter(self.row_check, num_proc=8)
-        else:
-            cache_dir = "/media/downloads/.cache/huggingface/datasets/mitermix___audiosnippets_small_with_detailed_annotation2/default/0.0.0/8206ef7c20fed6ae1b126340fb6a623e598b7f35"
-            cache_files = {
-                "train": "cache-b13e46f8923e5830_0000{}_of_00004.arrow",
-                "validation": "cache-b38ed611274fefec_0000{}_of_00004.arrow",
-                "test": "cache-7668cfbdae38e70d_0000{}_of_00004.arrow"
-            }
-            self.dataset = DatasetDict()
-            for split in cache_files:
-                ds = []
-                for i in range(4):
-                    ds.append(Dataset.from_file(cache_dir+"/"+cache_files[split].format(i)))
-                self.dataset[split] = concatenate_datasets(ds)
-            for split in self.dataset:
-                self.dataset[split] = self.dataset[split].filter(self.label_length_check, num_proc=10)
 
-        self.dataset["val"] = self.dataset["validation"]
-        self.dataset["train_mini"] = self.dataset["train"].select(range(8))
-        self.dataset["val_mini"] = self.dataset["val"].select(range(32))
+            self.dataset["val"] = self.dataset["validation"]
+            self.dataset["train_mini"] = self.dataset["train"].select(range(8))
+            self.dataset["val_mini"] = self.dataset["val"].select(range(32))
         # print(self.dataset)
 
     def get_dataset(self):

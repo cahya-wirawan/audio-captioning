@@ -27,6 +27,7 @@ def main(dataset_name: str,
         with_emotion=dataset_with_emotion, with_caption=dataset_with_caption, 
         with_detailed_caption=dataset_with_detailed_caption, with_transcription=dataset_with_transcription)
     dataset = data_laion.get_dataset()
+    del dataset["val"]
     print("Dataset", dataset)
     if dataset_local_dir is None:
         dataset_local_dir = dataset_name.replace("/", "_")
