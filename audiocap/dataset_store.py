@@ -6,7 +6,7 @@ import typer
 app = typer.Typer(pretty_exceptions_enable=False)
 
 @app.command()
-def main(dataset_name: str = typer.Option("cahya/audiosnippets-tiny", help="Dataset Name"),
+def main(dataset_name: str,
          train_split: float = typer.Option(0.95,  help="Dataset train split"),
          max_rows: int = typer.Option(0,  help="Dataset maximum train rows"),
          dataset_column_audio: str = typer.Option("mp3", help="Dataset Column Audio <mp3|audio.mp3>"),
