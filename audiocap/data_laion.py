@@ -70,7 +70,12 @@ class DataLaion():
         
         if Path(dataset_name).exists():
             self.dataset = load_from_disk(dataset_name)
-            self.dataset["val"] = self.dataset["validation"]
+            if "val" not in self.dataset:
+                self.dataset["val"] = self.dataset["validation"]
+            if "train_mini" not in self.dataset:
+                self.dataset["train_mini"] = self.dataset["train"].select(range(8))
+            if "val_mini" not in self.dataset:
+                self.dataset["val_mini"] = self.dataset["val"].select(range(32))
         else:
             self.dataset = load_dataset(dataset_name)
             if max_rows > 0:
